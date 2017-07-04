@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello World</title>
+  <style>* {padding: 0; margin: 0}</style>
+</head>
+  <script src="pixi.min.js"></script>
+<body>
+  <script type="text/javascript">
+//Create the renderer
+var renderer = PIXI.autoDetectRenderer(
+  640, 480,
+  {antialias: false, transparent: false, resolution: 1}
+);
+// go ahead and make it take up the whole screen
+renderer.view.style.position = "absolute";
+renderer.view.style.display = "block";
+renderer.autoResize = true;
+renderer.resize(window.innerWidth, window.innerHeight);
+//Add the canvas to the HTML document
+document.body.appendChild(renderer.view);
+
+//Create a container object called the `scene`
+var scene = new PIXI.Container();
+
+
+//Use Pixi's built-in `loader` object to load an image
+PIXI.loader
+  .add("images/cat.png")
+  .load(setup);
+
+//This `setup` function will run when the image has loaded
+function setup() {
+
+  //Create the `cat` sprite from the texture
+  var cat = new PIXI.Sprite(
+    PIXI.loader.resources["images/cat.png"].texture
+  );
+
+  //Add the cat to the scene
+  scene.addChild(cat);
+
+  //Render the scene
+  renderer.render(scene);
+}
+  </script>
+</body>
+</html>
