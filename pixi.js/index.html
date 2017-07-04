@@ -8,11 +8,18 @@
   <script src="pixi.min.js"></script>
 <body>
   <script type="text/javascript">
+
+// do some mappings
+var TextureCache = PIXI.utils.TextureCache;
+var Rectangle = PIXI.Rectangle;
+var Sprite = PIXI.Sprite;
+
 //Create the renderer
 var renderer = PIXI.autoDetectRenderer(
   640, 480,
   {antialias: false, transparent: false, resolution: 1}
 );
+var setupComplete = false;
 // go ahead and make it take up the whole screen
 renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
@@ -20,7 +27,9 @@ renderer.autoResize = true;
 renderer.resize(window.innerWidth, window.innerHeight);
 window.onresize = function(event) {
     renderer.resize(window.innerWidth, window.innerHeight);
-    setup();
+    if (setupComplete) {
+      resizeScene();
+    }
 };
 //Add the canvas to the HTML document
 document.body.appendChild(renderer.view);
@@ -28,14 +37,28 @@ document.body.appendChild(renderer.view);
 //Use Pixi's built-in `loader` object to load an image
 PIXI.loader
   .add("images/pixel.png")
-  .add("images/cat.png")
+  .add("images/sheet.json")
+  .on("progress", loadProgressHandler)
   .load(setup);
 
-//This `setup` function will run when the image has loaded
-function setup() {
-  //Create a container object called the `scene`
-  var scene = new PIXI.Container();
+function loadProgressHandler(loader, resource) {
 
+  //Display the file `url` currently being loaded
+  console.log("loading: " + resource.url);
+
+  //Display the precentage of files currently loaded
+  console.log("progress: " + loader.progress + "%");
+
+  //If you gave your files names as the first argument
+  //of the `add` method, you can access them like this
+  //console.log("loading: " + resource.name);
+}
+
+//Draw some bounds around the game area
+var topLine, bottomLine, leftLine, rightLine;
+var scene, scaledScene, rocket;
+
+function resizeScene() {
   // target aspect ration
   var targetAspectRatio = 16.0/9.0;
   var screenWidth = renderer.width;
@@ -43,21 +66,6 @@ function setup() {
   var shouldOffsetY = screenHeight * targetAspectRatio >= screenWidth;
   var yOffset = shouldOffsetY ? (screenHeight - (screenWidth / targetAspectRatio)) / 2 : 0;
   var xOffset = shouldOffsetY ? 0 : (screenWidth - (screenHeight * targetAspectRatio)) / 2;
-
-  //Draw some bounds around the game area
-  var topLine, bottomLine, leftLine, rightLine;
-  topLine = new PIXI.Sprite(
-    PIXI.loader.resources["images/pixel.png"].texture
-  );
-  bottomLine = new PIXI.Sprite(
-    PIXI.loader.resources["images/pixel.png"].texture
-  );
-  leftLine = new PIXI.Sprite(
-    PIXI.loader.resources["images/pixel.png"].texture
-  );
-  rightLine = new PIXI.Sprite(
-    PIXI.loader.resources["images/pixel.png"].texture
-  );
   var lineWidth = 2;
   topLine.position.set(xOffset,yOffset - lineWidth);
   topLine.width = renderer.width - (xOffset * 2);
@@ -72,6 +80,29 @@ function setup() {
   rightLine.width = lineWidth;
   rightLine.height = renderer.height - (yOffset * 2);
 
+  scaledScene.position.set(xOffset, yOffset);
+  var scale = (screenWidth - (xOffset * 2)) / 1280;
+  scaledScene.scale.set(scale, scale);
+}
+
+//This `setup` function will run when the image has loaded
+function setup() {
+  //Create a container object called the `scene`
+  scene = new PIXI.Container();
+
+  topLine = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  bottomLine = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  leftLine = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  rightLine = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+
   scene.addChild(topLine);
   scene.addChild(bottomLine);
   scene.addChild(leftLine);
@@ -79,23 +110,34 @@ function setup() {
 
 
   // a container we can pretend is 1280 / 720
-  var scaledScene = new PIXI.Container();
-  scaledScene.position.set(xOffset, yOffset);
-  var scaleValue = (screenWidth - (xOffset * 2)) / 1280;
-  var scale = new PIXI.ObservablePoint(null, null, scaleValue, scaleValue);
-  scaledScene.scale = scale;
+  scaledScene = new PIXI.Container();
   scene.addChild(scaledScene);
 
-  //Create the `cat` sprite from the texture
-  var cat = new PIXI.Sprite(
-    PIXI.loader.resources["images/cat.png"].texture
-  );
-  cat.position.set(32,64);
+  //Create the `tileset` sprite from the texture
+  var texture = TextureCache["explorer.png"];
+  //Create the sprite from the texture
+  rocket = new Sprite(texture);
+  rocket.position.set(32,64);
 
-  //Add the cat to the scene
-  scaledScene.addChild(cat);
+  //Add the rocket to the scene
+  scaledScene.addChild(rocket);
 
   //Render the scene
+  renderer.render(scene);
+
+  setupComplete = true;
+  gameLoop();
+}
+
+function gameLoop() {
+
+  //Loop this function at 60 frames per second
+  requestAnimationFrame(gameLoop);
+
+  //Move the cat 1 pixel to the right each frame
+  rocket.x += 1;
+
+  //Render the stage to see the animation
   renderer.render(scene);
 }
   </script>
