@@ -18,28 +18,82 @@ renderer.view.style.position = "absolute";
 renderer.view.style.display = "block";
 renderer.autoResize = true;
 renderer.resize(window.innerWidth, window.innerHeight);
+window.onresize = function(event) {
+    renderer.resize(window.innerWidth, window.innerHeight);
+    setup();
+};
 //Add the canvas to the HTML document
 document.body.appendChild(renderer.view);
 
-//Create a container object called the `scene`
-var scene = new PIXI.Container();
-
-
 //Use Pixi's built-in `loader` object to load an image
 PIXI.loader
+  .add("images/pixel.png")
   .add("images/cat.png")
   .load(setup);
 
 //This `setup` function will run when the image has loaded
 function setup() {
+  //Create a container object called the `scene`
+  var scene = new PIXI.Container();
+
+  // target aspect ration
+  var targetAspectRatio = 16.0/9.0;
+  var screenWidth = renderer.width;
+  var screenHeight = renderer.height;
+  var shouldOffsetY = screenHeight * targetAspectRatio >= screenWidth;
+  var yOffset = shouldOffsetY ? (screenHeight - (screenWidth / targetAspectRatio)) / 2 : 0;
+  var xOffset = shouldOffsetY ? 0 : (screenWidth - (screenHeight * targetAspectRatio)) / 2;
+
+  //Draw some bounds around the game area
+  var topLine, bottomLine, leftLine, rightLine;
+  topLine = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  bottomLine = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  leftLine = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  rightLine = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  var lineWidth = 2;
+  topLine.position.set(xOffset,yOffset - lineWidth);
+  topLine.width = renderer.width - (xOffset * 2);
+  topLine.height = lineWidth;
+  bottomLine.position.set(xOffset,renderer.height - yOffset);
+  bottomLine.width = renderer.width - (xOffset * 2);
+  bottomLine.height = lineWidth;
+  leftLine.position.set(xOffset - lineWidth,yOffset);
+  leftLine.width = lineWidth;
+  leftLine.height = renderer.height - (yOffset * 2);
+  rightLine.position.set(renderer.width - xOffset,yOffset);
+  rightLine.width = lineWidth;
+  rightLine.height = renderer.height - (yOffset * 2);
+
+  scene.addChild(topLine);
+  scene.addChild(bottomLine);
+  scene.addChild(leftLine);
+  scene.addChild(rightLine);
+
+
+  // a container we can pretend is 1280 / 720
+  var scaledScene = new PIXI.Container();
+  scaledScene.position.set(xOffset, yOffset);
+  var scaleValue = (screenWidth - (xOffset * 2)) / 1280;
+  var scale = new PIXI.ObservablePoint(null, null, scaleValue, scaleValue);
+  scaledScene.scale = scale;
+  scene.addChild(scaledScene);
 
   //Create the `cat` sprite from the texture
   var cat = new PIXI.Sprite(
     PIXI.loader.resources["images/cat.png"].texture
   );
+  cat.position.set(32,64);
 
   //Add the cat to the scene
-  scene.addChild(cat);
+  scaledScene.addChild(cat);
 
   //Render the scene
   renderer.render(scene);
