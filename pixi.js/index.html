@@ -56,6 +56,7 @@ function loadProgressHandler(loader, resource) {
 
 //Draw some bounds around the game area
 var topLine, bottomLine, leftLine, rightLine;
+var topBox, bottomBox, leftBox, rightBox;
 var scene, scaledScene, rocket;
 
 function resizeScene() {
@@ -80,8 +81,21 @@ function resizeScene() {
   rightLine.width = lineWidth;
   rightLine.height = renderer.height - (yOffset * 2);
 
+  topBox.position.set(0,0);
+  topBox.width = screenWidth;
+  topBox.height = topLine.y;
+  bottomBox.position.set(0,bottomLine.y + lineWidth);
+  bottomBox.width = screenWidth;
+  bottomBox.height = topLine.y;
+  leftBox.position.set(0,0);
+  leftBox.width = leftLine.x;
+  leftBox.height = screenHeight;
+  rightBox.position.set(rightLine.x + lineWidth,0);
+  rightBox.width = leftLine.x;
+  rightBox.height = screenHeight;
+
   scaledScene.position.set(xOffset, yOffset);
-  var scale = (screenWidth - (xOffset * 2)) / 1280;
+  var scale = (screenWidth - (xOffset * 2)) / 640;
   scaledScene.scale.set(scale, scale);
 }
 
@@ -90,6 +104,51 @@ function setup() {
   //Create a container object called the `scene`
   scene = new PIXI.Container();
 
+  // a container we can pretend is 1280 / 720
+  scaledScene = new PIXI.Container();
+  scene.addChild(scaledScene);
+
+  //Create the `tileset` sprite from the texture
+  var texture = TextureCache["explorer.png"];
+  //Create the sprite from the texture
+  rocket = new Sprite(texture);
+  rocket.position.set(32,64);
+  //rocket.scale = 2;
+  rocket.vx = rocket.vy = 0;
+  //Add the rocket to the scene
+  scaledScene.addChild(rocket);
+
+
+  var message = new PIXI.Text(
+    "Click To Move!",
+    {fontFamily: "Arial", fontSize: 32, fill: "white"}
+  );
+
+  message.position.set(32, 32);
+  scaledScene.addChild(message);
+
+
+  // setup the boxes around everything else
+  topBox = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  bottomBox = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  leftBox = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  rightBox = new PIXI.Sprite(
+    PIXI.loader.resources["images/pixel.png"].texture
+  );
+  topBox.tint = 0x000000;
+  bottomBox.tint = 0x000000;
+  leftBox.tint = 0x000000;
+  rightBox.tint = 0x000000;
+  scene.addChild(topBox);
+  scene.addChild(bottomBox);
+  scene.addChild(leftBox);
+  scene.addChild(rightBox);
   topLine = new PIXI.Sprite(
     PIXI.loader.resources["images/pixel.png"].texture
   );
@@ -102,31 +161,54 @@ function setup() {
   rightLine = new PIXI.Sprite(
     PIXI.loader.resources["images/pixel.png"].texture
   );
-
   scene.addChild(topLine);
   scene.addChild(bottomLine);
   scene.addChild(leftLine);
   scene.addChild(rightLine);
-
-
-  // a container we can pretend is 1280 / 720
-  scaledScene = new PIXI.Container();
-  scene.addChild(scaledScene);
-
-  //Create the `tileset` sprite from the texture
-  var texture = TextureCache["explorer.png"];
-  //Create the sprite from the texture
-  rocket = new Sprite(texture);
-  rocket.position.set(32,64);
-
-  //Add the rocket to the scene
-  scaledScene.addChild(rocket);
-
-  //Render the scene
-  renderer.render(scene);
-
   setupComplete = true;
+  resizeScene();
+
+  //Attach event listeners
+  window.addEventListener(
+    "mousedown", mouseDown, false
+  );
+  window.addEventListener(
+    "mousemove", mouseMove, false
+  );
+  window.addEventListener(
+    "mouseup", mouseUp, false
+  );
+
   gameLoop();
+}
+
+var isMouseDown = false;
+function mouseDown(event) {
+  isMouseDown = true;
+  mouseMove(event);
+}
+function mouseUp(event) {
+  isMouseDown = false;
+  mouseMove(event);
+}
+function mouseMove(event) {
+  if (isMouseDown === true) {
+    var rocketX = rocket.getGlobalPosition().x;
+    var rocketY = rocket.getGlobalPosition().y;
+    if (event.layerX > rocketX) {
+      rocket.vx = 1;
+    } else if (event.layerX < rocketX) {
+      rocket.vx = -1;
+    }
+    if (event.layerY > rocketY) {
+      rocket.vy = 1;
+    } else if (event.layerY < rocketY) {
+      rocket.vy = -1;
+    }
+  } else {
+    rocket.vx = 0;
+    rocket.vy = 0;
+  }
 }
 
 function gameLoop() {
@@ -134,9 +216,8 @@ function gameLoop() {
   //Loop this function at 60 frames per second
   requestAnimationFrame(gameLoop);
 
-  //Move the cat 1 pixel to the right each frame
-  rocket.x += 1;
-
+  rocket.x += rocket.vx;
+  rocket.y += rocket.vy;
   //Render the stage to see the animation
   renderer.render(scene);
 }
