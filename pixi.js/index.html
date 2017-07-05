@@ -178,6 +178,15 @@ function setup() {
   window.addEventListener(
     "mouseup", mouseUp, false
   );
+  window.addEventListener(
+    "touchstart", mouseDown, false
+  );
+  window.addEventListener(
+    "touchmove", mouseMove, false
+  );
+  window.addEventListener(
+    "touchend", mouseUp, false
+  );
 
   gameLoop();
 }
