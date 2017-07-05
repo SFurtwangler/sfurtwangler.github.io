@@ -97,6 +97,7 @@ function resizeScene() {
   scaledScene.position.set(xOffset, yOffset);
   var scale = (screenWidth - (xOffset * 2)) / 640;
   scaledScene.scale.set(scale, scale);
+  renderer.render(scene);
 }
 
 //This `setup` function will run when the image has loaded
